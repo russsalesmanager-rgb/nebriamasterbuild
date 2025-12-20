@@ -1,0 +1,1340 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Nebria – Universe of Social Platforms</title>
+  <!--
+    This file represents an expanded vision for the Nebria super‑app.  Each
+    division of the application is treated like its own dedicated
+    platform: a YouTube‑like video network (You‑Zone), a Pinterest‑like
+    collection of boards (Pin‑Zone), an Instagram‑style gallery (Pix‑Zone),
+    a thread‑based discussion forum (Thread‑Zone), a simple reverse
+    chronological feed (Core Feed), a trending signals hub (X‑Zone),
+    an AI laboratory (AI‑Zone), a fully featured administrative
+    dashboard (Admin‑Zone), and an immersive virtual reality lobby
+    (VR‑Zone).  All of the pages are intentionally spacious and
+    content‑rich to convey scale and depth.  Although real APIs are
+    not contacted here, the markup is annotated with hooks where ChatGPT,
+    Gemini, Grok or other models could be integrated.  The application
+    uses only vanilla HTML, CSS and JavaScript to keep everything in
+    a single file.
+
+    To switch between divisions, click any item in the sidebar.  Each
+    section is hidden by default and revealed on demand.  The Admin
+    dashboard exposes a number of controls that could be wired to
+    backend services to manage users, content and settings.  The VR
+    lobby section illustrates how an immersive world could be
+    introduced.
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Global color palette.  These variables make it easy to tweak
+         themes across the entire site. */
+      --bg: #0a0f1c;
+      --panel: #10182f;
+      --panel-alt: #0e1220;
+      --card: #0b1328;
+      --border: rgba(255,255,255,0.08);
+      --text: #eaf0ff;
+      --muted: rgba(234,240,255,0.7);
+      --brand: #7c5cff;
+      --brand-accent: #31d4ff;
+      --positive: #41ffb3;
+      --warning: #ffd66b;
+      --danger: #ff5c7a;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
+    /* The overall app layout uses CSS grid.  The left sidebar is
+       fixed while the main content and right aside scroll. */
+    #app {
+      display: grid;
+      grid-template-columns: 300px 1fr 360px;
+      grid-template-rows: 100%;
+      height: 100%;
+    }
+    nav {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    nav h2 {
+      margin: 0 0 20px;
+      font-size: 24px;
+      letter-spacing: -0.02em;
+    }
+    .nav-group { margin-bottom: 24px; }
+    .nav-group h3 {
+      margin: 16px 0 8px;
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .nav-item {
+      cursor: pointer;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+      color: var(--text);
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .nav-item.active {
+      background: linear-gradient(90deg, rgba(124,92,255,0.35), rgba(49,212,255,0.25));
+      box-shadow: 0 8px 20px rgba(124,92,255,0.3);
+      font-weight: 700;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.06); transform: translateY(-2px); }
+    .nav-item span.icon {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+    }
+    main {
+      overflow-y: auto;
+      padding: 20px;
+    }
+    aside {
+      background: var(--panel);
+      border-left: 1px solid var(--border);
+      padding: 20px;
+      overflow-y: auto;
+    }
+    /* Cards used across the app */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+    }
+    .card h3 { margin: 0 0 12px; font-size: 18px; }
+    .card .meta { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .card img { max-width: 100%; border-radius: var(--radius); margin-top: 8px; }
+    /* Feed styles */
+    .post {
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    .post .post-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .post .post-header img {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      object-fit: cover;
+    }
+    .post .post-header .name {
+      font-weight: 700;
+    }
+    .post .post-header .handle {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .post .post-content { font-size: 14px; line-height: 1.4; }
+    .post img.media { max-width: 100%; border-radius: var(--radius); margin-top: 8px; }
+    .post .actions { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-top: 4px; }
+    /* Video grid for You‑Zone */
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .video {
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    }
+    .video img { width: 100%; height: 150px; object-fit: cover; }
+    .video .video-info { padding: 12px; }
+    .video .video-info h4 { margin: 0; font-size: 16px; }
+    .video .video-info .channel { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    /* Pin grid for Pin‑Zone */
+    .pin-grid {
+      column-count: 4;
+      column-gap: 20px;
+    }
+    .pin {
+      break-inside: avoid;
+      margin-bottom: 20px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    }
+    .pin img { width: 100%; display: block; }
+    .pin .pin-info { padding: 12px; }
+    .pin .pin-info h4 { margin: 0; font-size: 14px; }
+    .pin .pin-info .source { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    /* Gallery grid for Pix‑Zone */
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .gallery img {
+      width: 100%; border-radius: var(--radius); object-fit: cover;
+      height: 200px;
+    }
+    /* Thread Zone */
+    .thread {
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel-alt);
+      padding: 16px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    }
+    .thread .thread-header { font-weight: 700; margin-bottom: 6px; }
+    .thread .thread-post { margin-left: 20px; margin-bottom: 8px; font-size: 14px; }
+    /* VR lobby */
+    .vr-lobby {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 20px;
+      padding: 40px;
+    }
+    .vr-lobby img {
+      max-width: 100%;
+      border-radius: var(--radius);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .vr-lobby button {
+      padding: 12px 24px;
+      border-radius: var(--radius);
+      border: none;
+      background: linear-gradient(90deg, var(--brand), var(--brand-accent));
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(124,92,255,0.4);
+    }
+    /* AI chat UI */
+    .chat-container {
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .chat-log {
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      height: 280px;
+      overflow-y: auto;
+      font-size: 13px;
+    }
+    .chat-input {
+      display: flex;
+      gap: 8px;
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--panel-alt);
+      color: var(--text);
+    }
+    .chat-input button {
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      border: none;
+      background: linear-gradient(90deg, var(--brand), var(--brand-accent));
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    /* Admin dashboard */
+    .admin-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .admin-stat {
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+      text-align: center;
+    }
+    .admin-stat h4 { margin: 0; font-size: 32px; }
+    .admin-stat p { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+    }
+    .admin-table th, .admin-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      font-size: 14px;
+    }
+    .admin-table th { background: var(--panel); }
+    .admin-actions button {
+      margin-right: 8px;
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--panel-alt);
+      color: var(--text);
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .admin-actions .danger { background: rgba(255,92,122,0.15); border-color: rgba(255,92,122,0.4); }
+    /* Scrollbar styling for WebKit browsers */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--panel); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+    /* Responsive layout adjustments */
+    @media (max-width: 1024px) {
+      #app { grid-template-columns: 240px 1fr; }
+      aside { display: none; }
+    }
+
+    /* Authentication modal styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-box {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 400px;
+      max-width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+    .modal-box h3 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      font-size: 22px;
+    }
+    .modal-box form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .modal-box input {
+      padding: 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--panel-alt);
+      color: var(--text);
+    }
+    .modal-box button {
+      padding: 12px;
+      border-radius: var(--radius);
+      border: none;
+      background: linear-gradient(90deg, var(--brand), var(--brand-accent));
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .modal-close {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Sidebar navigation with divisions.  Clicking an item will
+         activate the corresponding section in the main area. -->
+    <nav>
+      <h2>Nebria</h2>
+      <div class="nav-group">
+        <h3>Main</h3>
+        <div class="nav-item" data-zone="home"><span class="icon">⌂</span> Core Feed</div>
+        <div class="nav-item" data-zone="x"><span class="icon">#</span> X‑Zone</div>
+        <div class="nav-item" data-zone="you"><span class="icon">▶</span> You‑Zone</div>
+        <div class="nav-item" data-zone="pin"><span class="icon">⌁</span> Pin‑Zone</div>
+        <div class="nav-item" data-zone="pix"><span class="icon">◈</span> Pix‑Zone</div>
+        <div class="nav-item" data-zone="thread"><span class="icon">💬</span> Thread‑Zone</div>
+        <div class="nav-item" data-zone="vr"><span class="icon">🕶</span> VR‑Zone</div>
+        <div class="nav-item" data-zone="ai"><span class="icon">🤖</span> AI‑Zone</div>
+      </div>
+      <div class="nav-group">
+        <h3>System</h3>
+        <div class="nav-item" data-zone="admin"><span class="icon">⚙</span> Admin‑Zone</div>
+      </div>
+      <!-- Account nav group appears conditionally based on authentication -->
+      <div class="nav-group" id="account-nav">
+        <h3>Account</h3>
+        <!-- These items will be toggled by JS depending on user login state -->
+        <div class="nav-item" id="nav-login" data-auth="guest"><span class="icon">🔑</span> Login</div>
+        <div class="nav-item" id="nav-signup" data-auth="guest"><span class="icon">➕</span> Sign Up</div>
+        <div class="nav-item" id="nav-profile" data-zone="profile" data-auth="user" style="display:none;"><span class="icon">👤</span> Profile</div>
+        <div class="nav-item" id="nav-settings" data-zone="settings" data-auth="user" style="display:none;"><span class="icon">⚙</span> Settings</div>
+        <div class="nav-item" id="nav-logout" data-auth="user" style="display:none;"><span class="icon">🚪</span> Logout</div>
+      </div>
+    </nav>
+    <!-- Main content area.  Each section represents a division.  All
+         sections are initially hidden except for the home feed.  JS
+         will toggle the display property accordingly. -->
+    <main id="main">
+      <section id="zone-home" class="zone-section">
+        <h2>Core Feed</h2>
+        <div id="home-feed"></div>
+      </section>
+      <section id="zone-x" class="zone-section" style="display:none">
+        <h2>X‑Zone: Trending Signals</h2>
+        <p>Discover what the world is buzzing about.  Trending hashtags and
+        posts appear here in real time.</p>
+        <div id="x-trending" class="card"></div>
+      </section>
+      <section id="zone-you" class="zone-section" style="display:none">
+        <h2>You‑Zone: Video Network</h2>
+        <p>Long‑form videos, documentaries, tutorials and streams live
+        here.  Discover, subscribe and binge.</p>
+        <div id="you-grid" class="video-grid"></div>
+      </section>
+      <section id="zone-pin" class="zone-section" style="display:none">
+        <h2>Pin‑Zone: Boards &amp; Collections</h2>
+        <p>Collect and curate inspiration.  Save any image, link or
+        product to your own boards.  Explore trending boards below.</p>
+        <div id="pin-grid" class="pin-grid"></div>
+      </section>
+      <section id="zone-pix" class="zone-section" style="display:none">
+        <h2>Pix‑Zone: Gallery</h2>
+        <p>Share your photography and visual art with the community.  The
+        gallery arranges images in a simple grid.</p>
+        <div id="pix-gallery" class="gallery"></div>
+      </section>
+      <section id="zone-thread" class="zone-section" style="display:none">
+        <h2>Thread‑Zone: Discussion Forum</h2>
+        <p>A place for deeper conversations.  Start a topic and follow
+        replies in nested threads.</p>
+        <div id="thread-list"></div>
+      </section>
+      <section id="zone-vr" class="zone-section" style="display:none">
+        <h2>VR‑Zone: Nebria Virtual Reality Lobby</h2>
+        <div class="vr-lobby">
+          <img src="https://images.unsplash.com/photo-1603527452447-6bf84c4f1ed3?auto=format&fit=crop&w=1200&q=80" alt="Virtual reality environment"/>
+          <p>Step into the Nebria VR lobby and explore a fully immersive,
+          3D social universe.  Customize your avatar, attend events,
+          watch concerts and collaborate with friends in real time.</p>
+          <button onclick="alert('Launching VR world... (stub)')">Enter VR World</button>
+        </div>
+      </section>
+      <section id="zone-ai" class="zone-section" style="display:none">
+        <h2>AI‑Zone: Chat &amp; Creativity</h2>
+        <p>Interact with cutting edge language models.  Ask questions,
+        brainstorm ideas or generate content.  Select a model below and
+        start chatting.</p>
+        <div class="card">
+          <h3>ChatGPT Assistant</h3>
+          <div class="chat-container">
+            <div id="chatgpt-log" class="chat-log"></div>
+            <div class="chat-input">
+              <input id="chatgpt-input" type="text" placeholder="Type a message..."/>
+              <button onclick="sendAIMessage('chatgpt')">Send</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Gemini Assistant</h3>
+          <div class="chat-container">
+            <div id="gemini-log" class="chat-log"></div>
+            <div class="chat-input">
+              <input id="gemini-input" type="text" placeholder="Type a message..."/>
+              <button onclick="sendAIMessage('gemini')">Send</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Grok Assistant</h3>
+          <div class="chat-container">
+            <div id="grok-log" class="chat-log"></div>
+            <div class="chat-input">
+              <input id="grok-input" type="text" placeholder="Type a message..."/>
+              <button onclick="sendAIMessage('grok')">Send</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section id="zone-admin" class="zone-section" style="display:none">
+        <h2>Admin‑Zone: System Dashboard</h2>
+        <p>As a Nebria administrator you have full control over users,
+        posts, analytics and configuration.  Use the tools below to
+        moderate content, manage roles, adjust divisions and monitor
+        platform health.  No real network requests are sent in this demo,
+        but form fields and actions illustrate the breadth of the admin
+        surface.</p>
+        <div class="admin-stats" id="admin-stats"></div>
+        <h3>Users</h3>
+        <table class="admin-table" id="admin-users">
+          <thead>
+            <tr><th>User</th><th>Role</th><th>Joined</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <h3>Flagged Posts</h3>
+        <table class="admin-table" id="admin-posts">
+          <thead>
+            <tr><th>Author</th><th>Content</th><th>Reason</th><th>Actions</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <h3>Create New Division</h3>
+        <div class="card">
+          <div class="admin-actions">
+            <input type="text" id="new-zone-id" placeholder="ID (e.g. music)" style="margin-bottom:6px;padding:8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--panel-alt);color:var(--text);width:100%;"/>
+            <input type="text" id="new-zone-label" placeholder="Label (e.g. Music‑Zone)" style="margin-bottom:6px;padding:8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--panel-alt);color:var(--text);width:100%;"/>
+            <input type="text" id="new-zone-icon" placeholder="Icon (emoji or symbol)" style="margin-bottom:6px;padding:8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--panel-alt);color:var(--text);width:100%;"/>
+            <button onclick="createNewZone()">Add Division</button>
+          </div>
+        </div>
+      </section>
+      <!-- User profile page -->
+      <section id="zone-profile" class="zone-section" style="display:none">
+        <h2>Your Profile</h2>
+        <div id="profile-container" class="card" style="max-width:800px;margin:auto;">
+          <!-- Profile header with avatar and banner -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+            <div style="position:relative;width:100%;height:160px;background:var(--panel);border-radius:var(--radius);overflow:hidden;">
+              <img id="profile-banner" src="" alt="Banner" style="width:100%;height:100%;object-fit:cover;"/>
+              <input type="file" id="banner-upload" accept="image/*" style="position:absolute;bottom:8px;right:8px;" title="Upload banner" />
+            </div>
+            <div style="position:relative;margin-top:-40px;">
+              <img id="profile-avatar" src="" alt="Avatar" style="width:80px;height:80px;border-radius:24px;border:2px solid var(--bg);object-fit:cover;"/>
+              <input type="file" id="avatar-upload" accept="image/*" style="position:absolute;bottom:0;right:0;" title="Upload avatar" />
+            </div>
+          </div>
+          <!-- Profile form -->
+          <form id="profile-form" style="display:flex;flex-direction:column;gap:12px;margin-top:20px;">
+            <input type="text" id="profile-displayname" placeholder="Display Name" style="padding:10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--panel-alt);color:var(--text);"/>
+            <input type="text" id="profile-username" placeholder="@username" disabled style="padding:10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--panel-alt);color:var(--muted);"/>
+            <textarea id="profile-bio" rows="3" placeholder="Bio (supports links)" style="padding:10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--panel-alt);color:var(--text);"></textarea>
+            <input type="text" id="profile-link" placeholder="Link in bio" style="padding:10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--panel-alt);color:var(--text);"/>
+            <input type="text" id="profile-location" placeholder="Location" style="padding:10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--panel-alt);color:var(--text);"/>
+            <input type="text" id="profile-website" placeholder="Website" style="padding:10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--panel-alt);color:var(--text);"/>
+            <button type="submit" style="padding:12px;border:none;border-radius:var(--radius);background:linear-gradient(90deg,var(--brand),var(--brand-accent));color:#fff;font-weight:700;cursor:pointer;">Save Profile</button>
+          </form>
+          <div id="profile-stats" style="margin-top:20px;font-size:14px;color:var(--muted);display:flex;gap:20px;justify-content:center;"></div>
+        </div>
+      </section>
+
+      <!-- User settings page -->
+      <section id="zone-settings" class="zone-section" style="display:none">
+        <h2>Settings</h2>
+        <div class="card" style="max-width:600px;margin:auto;">
+          <h3>Theme Selector</h3>
+          <p>Select your preferred theme.  Your choice will be saved to your profile.</p>
+          <div id="theme-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin-top:12px;"></div>
+        </div>
+        <div class="card" style="max-width:600px;margin:auto;">
+          <h3>Account Security</h3>
+          <p>Change your password or manage connected OAuth accounts.</p>
+          <button style="padding:10px 20px;border-radius:var(--radius);border:none;background:var(--panel-alt);color:var(--text);margin-right:8px;">Change Password</button>
+          <button style="padding:10px 20px;border-radius:var(--radius);border:none;background:var(--panel-alt);color:var(--text);">Manage OAuth</button>
+        </div>
+      </section>
+    </main>
+    <!-- Right aside with profile and trending topics.  This area is
+         visible on larger screens and collapses on smaller devices. -->
+    <aside>
+      <div class="card">
+        <h3>Your Profile</h3>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <img src="https://images.unsplash.com/photo-1539594686585-270b29b67f21?q=80&w=80&h=80&auto=format&fit=crop" alt="Avatar" style="width:56px;height:56px;border-radius:18px;border:1px solid var(--border);object-fit:cover;"/>
+          <div>
+            <div style="font-weight:700;">Russ (Owner)</div>
+            <div style="font-size:12px;color:var(--muted);">@russ_master</div>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--muted);">Architect of the Nebria Neural Grid.  Building the future of autonomous social connections.</p>
+      </div>
+      <div class="card">
+        <h3>Trending Now</h3>
+        <ul id="trending-list" style="list-style:none;margin:0;padding:0;font-size:14px;color:var(--brand);"></ul>
+      </div>
+      <div class="card">
+        <h3>Suggested Connections</h3>
+        <div id="suggested-users"></div>
+      </div>
+    </aside>
+
+  <!-- Authentication modal (hidden by default) -->
+  <div id="auth-modal" class="modal" style="display:none;">
+    <!-- Login box -->
+    <div class="modal-box" id="auth-login-box" style="display:none;">
+      <span class="modal-close" onclick="closeAuthModal()">✕</span>
+      <h3>Login to Nebria</h3>
+      <form id="login-form">
+        <input type="email" id="login-email" placeholder="Email" required />
+        <input type="password" id="login-password" placeholder="Password" required />
+        <button type="submit">Login</button>
+      </form>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px;">Don't have an account? <a href="#" id="switch-to-signup" style="color:var(--brand);text-decoration:underline;">Sign Up</a></p>
+    </div>
+    <!-- Signup box -->
+    <div class="modal-box" id="auth-signup-box" style="display:none;">
+      <span class="modal-close" onclick="closeAuthModal()">✕</span>
+      <h3>Create your Nebria account</h3>
+      <form id="signup-form">
+        <input type="text" id="signup-name" placeholder="Full Name" required />
+        <input type="text" id="signup-username" placeholder="Username" required />
+        <input type="email" id="signup-email" placeholder="Email" required />
+        <input type="password" id="signup-password" placeholder="Password" required />
+        <button type="submit">Sign Up</button>
+      </form>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px;">Already have an account? <a href="#" id="switch-to-login" style="color:var(--brand);text-decoration:underline;">Log In</a></p>
+    </div>
+  </div>
+  </div>
+
+  <script>
+    /* ------------------------------------------------------------------
+       Data definitions
+       ------------------------------------------------------------------ */
+    // Sample posts for the core feed.  In a real app these would be
+    // fetched from a backend.  Each post may include optional media and
+    // belongs to a zone.  You can expand this array to make the feed
+    // feel even more massive.
+    const posts = [
+      {
+        id: 1,
+        user: { name: 'Nova Nebula', handle: '@nova', avatar: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?q=80&w=100&h=100&auto=format&fit=crop' },
+        content: 'Welcome to Nebria!  This unified social universe will change how we connect forever.  Swipe through all the zones to explore.',
+        media: '',
+        zone: 'home',
+        timestamp: Date.now() - 3600 * 1000,
+      },
+      {
+        id: 2,
+        user: { name: 'AI Research Lab', handle: '@ai_lab', avatar: 'https://images.unsplash.com/photo-1519337265831-281ec6cc8514?q=80&w=100&h=100&auto=format&fit=crop' },
+        content: 'We just integrated ChatGPT, Gemini and Grok into our AI‑Zone!  Talk to your favourite models in one place.',
+        media: '',
+        zone: 'home',
+        timestamp: Date.now() - 7200 * 1000,
+      },
+      {
+        id: 3,
+        user: { name: 'Nature Lover', handle: '@naturegal', avatar: 'https://images.unsplash.com/photo-1552058544-f2b08422138a?q=80&w=100&h=100&auto=format&fit=crop' },
+        content: 'Just pinned my favourite landscapes in Pin‑Zone.  Nothing beats the beauty of Earth.  🌲🏔️',
+        media: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=800&q=80',
+        zone: 'pin',
+        timestamp: Date.now() - 10800 * 1000,
+      },
+      {
+        id: 4,
+        user: { name: 'Cinephile', handle: '@filmfan', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=100&h=100&auto=format&fit=crop' },
+        content: 'Check out my latest short film on You‑Zone.  Deep dive into the psychology of time travel.',
+        media: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80',
+        zone: 'you',
+        timestamp: Date.now() - 14400 * 1000,
+      },
+      {
+        id: 5,
+        user: { name: 'Photon Pix', handle: '@pixie', avatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?q=80&w=100&h=100&auto=format&fit=crop' },
+        content: 'Captured this lightning bolt over the skyline last night.  See more in Pix‑Zone!',
+        media: 'https://images.unsplash.com/photo-1478081686667-3ab2cc235a8b?auto=format&fit=crop&w=800&q=80',
+        zone: 'pix',
+        timestamp: Date.now() - 28800 * 1000,
+      },
+      {
+        id: 6,
+        user: { name: 'Thread Master', handle: '@discuss', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=100&h=100&auto=format&fit=crop' },
+        content: 'What are everyone’s thoughts on decentralised social networks?  Join the thread!',
+        media: '',
+        zone: 'thread',
+        timestamp: Date.now() - 54000 * 1000,
+      },
+    ];
+
+    // Sample videos for You‑Zone.  Each entry could be a video id or link.
+    const videos = [
+      { title: 'Nebria Platform Tour', channel: 'Nebria Team', thumbnail: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80' },
+      { title: 'Building with Web Components', channel: 'Dev Talks', thumbnail: 'https://images.unsplash.com/photo-1526378722045-97f51e8e4a0c?auto=format&fit=crop&w=800&q=80' },
+      { title: 'The Art of Storytelling', channel: 'Creativity Hub', thumbnail: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=800&q=80' },
+      { title: 'Exploring the Cosmos', channel: 'Science Vision', thumbnail: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=800&q=80' },
+      { title: 'Cooking with AI', channel: 'Future Foodies', thumbnail: 'https://images.unsplash.com/photo-1506368083636-68f82edf003d?auto=format&fit=crop&w=800&q=80' },
+      { title: 'Deep Dive: Quantum Computing', channel: 'Tech Explained', thumbnail: 'https://images.unsplash.com/photo-1475459024579-ef3eb343058b?auto=format&fit=crop&w=800&q=80' },
+    ];
+
+    // Sample pins for Pin‑Zone.  Each has an image and description.
+    const pins = [
+      { title: 'Minimalist Workspace', source: 'designblogs.com', image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80' },
+      { title: 'Sunset at the Beach', source: 'photographyhub.org', image: 'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?auto=format&fit=crop&w=800&q=80' },
+      { title: 'Modern Architecture', source: 'archdaily.com', image: 'https://images.unsplash.com/photo-1486365227551-f3f90034a12b?auto=format&fit=crop&w=800&q=80' },
+      { title: 'Healthy Smoothie Recipes', source: 'foodies.net', image: 'https://images.unsplash.com/photo-1535223289827-42f1e9919769?auto=format&fit=crop&w=800&q=80' },
+      { title: 'Travel Bucket List', source: 'wanderlust.com', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80' },
+      { title: 'DIY Garden Ideas', source: 'greenliving.com', image: 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=800&q=80' },
+      { title: 'Fashion Trends 2025', source: 'stylewatch.com', image: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=800&q=80' },
+      { title: 'Home Workout Routine', source: 'fitlife.org', image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=800&q=80' },
+    ];
+
+    // Sample images for Pix‑Zone.  Could be expanded to dozens of items.
+    const galleryImages = [
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1495567720989-cebdbdd97913?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1499084732479-de2c02d45fc4?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1519682337058-a94d519337bc?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1506765515384-028b60a970df?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1514511011218-d77330bff5a5?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=800&q=80',
+    ];
+
+    // Sample threads for Thread‑Zone.  Each thread contains a list of
+    // replies.  Threads can be nested arbitrarily, but this simple
+    // demonstration keeps them shallow.
+    const threads = [
+      {
+        title: 'Decentralisation vs Centralisation',
+        posts: [
+          { author: '@cryptofan', content: 'Decentralised networks empower users.  Centralisation risks censorship.', timestamp: Date.now() - 86400 * 1000 },
+          { author: '@skeptic', content: 'But who moderates harmful content if everything is decentralised?', timestamp: Date.now() - 86300 * 1000 },
+          { author: '@optimist', content: 'Community moderation can solve most issues if incentives align.', timestamp: Date.now() - 86200 * 1000 },
+        ],
+      },
+      {
+        title: 'Favourite Sci‑Fi Novels',
+        posts: [
+          { author: '@reader1', content: 'Dune is a masterpiece.', timestamp: Date.now() - 72000 * 1000 },
+          { author: '@reader2', content: 'Neuromancer shaped cyberpunk as we know it.', timestamp: Date.now() - 71900 * 1000 },
+          { author: '@reader3', content: 'The Three‑Body Problem blew my mind.', timestamp: Date.now() - 71800 * 1000 },
+        ],
+      },
+    ];
+
+    // Trending topics; updated daily.  In a real app this would be
+    // dynamic.  Keep the list long to make the page feel full.
+    const trendingTopics = ['#Nebria', '#AIRevolution', '#VirtualReality', '#QuantumComputing', '#HealthyLiving', '#DeepSpace', '#SustainableDesign', '#GlobalMusic', '#TravelGoals', '#FutureFood'];
+
+    // Suggested users for the aside.  Each includes a name and handle.
+    const suggested = [
+      { name: 'Quantum Queen', handle: '@quanta', avatar: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=80&q=80' },
+      { name: 'Pixel Painter', handle: '@pixelp', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=80&q=80' },
+      { name: 'Global Nomad', handle: '@wander', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=80&q=80' },
+      { name: 'Gadget Geek', handle: '@gadget', avatar: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?auto=format&fit=crop&w=80&q=80' },
+    ];
+
+    // Administrative data for the dashboard.  In real usage, these
+    // values would be derived from analytics services.
+    const adminStatsData = [
+      { label: 'Users', value: 14200000 },
+      { label: 'Daily Active', value: 3500000 },
+      { label: 'Posts', value: 98000000 },
+      { label: 'Videos', value: 1200000 },
+      { label: 'Images', value: 8600000 },
+      { label: 'Threads', value: 240000 },
+    ];
+    const adminUsers = [
+      { name: 'Russ (Owner)', handle: '@russ_master', role: 'OWNER', joined: '2024‑12‑31', status: 'Active' },
+      { name: 'Nova Nebula', handle: '@nova', role: 'ADMIN', joined: '2025‑01‑10', status: 'Active' },
+      { name: 'Thread Master', handle: '@discuss', role: 'MODERATOR', joined: '2025‑02‑22', status: 'Active' },
+      { name: 'Photon Pix', handle: '@pixie', role: 'CREATOR', joined: '2025‑03‑05', status: 'Suspended' },
+    ];
+    const adminFlaggedPosts = [
+      { author: '@troll1', content: 'This is spam content and should be removed.', reason: 'Spam' },
+      { author: '@bot123', content: 'Buy followers now!!!', reason: 'Scam' },
+      { author: '@hater', content: 'Offensive language and harassment.', reason: 'Harassment' },
+    ];
+
+    /* ------------------------------------------------------------------
+       Helper functions
+       ------------------------------------------------------------------ */
+    function formatNumber(x) {
+      return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+    // Activate a zone by ID.  Hide all sections and highlight the
+    // corresponding nav item.  Then render the content for that zone.
+    function activateZone(id) {
+      document.querySelectorAll('.zone-section').forEach(sec => {
+        sec.style.display = 'none';
+      });
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.zone === id);
+      });
+      const active = document.getElementById('zone-' + id);
+      if (active) active.style.display = '';
+      // Render content for dynamic zones
+      if (id === 'home') renderHomeFeed();
+      if (id === 'x') renderXZone();
+      if (id === 'you') renderYouZone();
+      if (id === 'pin') renderPinZone();
+      if (id === 'pix') renderPixZone();
+      if (id === 'thread') renderThreadZone();
+      if (id === 'admin') renderAdmin();
+      if (id === 'ai') initializeAI();
+    }
+    // Render home feed by creating post cards for each entry in posts.
+    function renderHomeFeed() {
+      const container = document.getElementById('home-feed');
+      container.innerHTML = '';
+      // sort posts by timestamp descending to show newest first
+      const sorted = posts.slice().sort((a, b) => b.timestamp - a.timestamp);
+      sorted.forEach(post => {
+        const div = document.createElement('div');
+        div.className = 'post';
+        div.innerHTML = `
+          <div class="post-header">
+            <img src="${post.user.avatar}" alt="${post.user.name}" />
+            <div>
+              <div class="name">${post.user.name}</div>
+              <div class="handle">${post.user.handle}</div>
+            </div>
+          </div>
+          <div class="post-content">${post.content}</div>
+          ${post.media ? `<img class="media" src="${post.media}" alt="Media" />` : ''}
+          <div class="actions">
+            <span>👍 Like</span>
+            <span>💬 Comment</span>
+            <span>↗️ Share</span>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+    // Render trending zone by selecting popular posts and hashtags
+    function renderXZone() {
+      const container = document.getElementById('x-trending');
+      container.innerHTML = '';
+      let html = '<h3>Trending Hashtags</h3><ul style="margin:0;padding-left:16px;">';
+      trendingTopics.forEach(tag => {
+        html += `<li style="margin-bottom:6px;color:var(--brand);">${tag}</li>`;
+      });
+      html += '</ul>';
+      html += '<h3 style="margin-top:20px;">Trending Posts</h3>';
+      // pick top 3 posts based on recency with content containing '#'
+      const trendingPosts = posts.filter(p => /#/g.test(p.content)).slice(0, 3);
+      trendingPosts.forEach(p => {
+        html += `<div class="post" style="background:var(--panel);"><div class="post-header"><img src="${p.user.avatar}" alt="${p.user.name}"/><div><div class="name">${p.user.name}</div><div class="handle">${p.user.handle}</div></div></div><div class="post-content">${p.content}</div></div>`;
+      });
+      container.innerHTML = html;
+    }
+    // Render You‑Zone by creating a grid of videos.
+    function renderYouZone() {
+      const grid = document.getElementById('you-grid');
+      grid.innerHTML = '';
+      videos.forEach(v => {
+        const card = document.createElement('div');
+        card.className = 'video';
+        card.innerHTML = `
+          <img src="${v.thumbnail}" alt="${v.title}" />
+          <div class="video-info">
+            <h4>${v.title}</h4>
+            <div class="channel">${v.channel}</div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+    // Render Pin‑Zone.  Use CSS columns for a Masonry‑like effect.
+    function renderPinZone() {
+      const grid = document.getElementById('pin-grid');
+      grid.innerHTML = '';
+      pins.forEach(pin => {
+        const el = document.createElement('div');
+        el.className = 'pin';
+        el.innerHTML = `
+          <img src="${pin.image}" alt="${pin.title}" />
+          <div class="pin-info">
+            <h4>${pin.title}</h4>
+            <div class="source">${pin.source}</div>
+          </div>
+        `;
+        grid.appendChild(el);
+      });
+    }
+    // Render Pix‑Zone gallery
+    function renderPixZone() {
+      const gallery = document.getElementById('pix-gallery');
+      gallery.innerHTML = '';
+      galleryImages.forEach(src => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = 'Gallery image';
+        gallery.appendChild(img);
+      });
+    }
+    // Render thread zone
+    function renderThreadZone() {
+      const list = document.getElementById('thread-list');
+      list.innerHTML = '';
+      threads.forEach(th => {
+        const t = document.createElement('div');
+        t.className = 'thread';
+        let html = `<div class="thread-header">${th.title}</div>`;
+        th.posts.forEach(p => {
+          html += `<div class="thread-post"><strong>${p.author}</strong>: ${p.content}</div>`;
+        });
+        t.innerHTML = html;
+        list.appendChild(t);
+      });
+    }
+    // Render admin dashboard statistics and tables
+    function renderAdmin() {
+      // Stats
+      const stats = document.getElementById('admin-stats');
+      stats.innerHTML = '';
+      adminStatsData.forEach(s => {
+        const stat = document.createElement('div');
+        stat.className = 'admin-stat';
+        stat.innerHTML = `<h4>${formatNumber(s.value)}</h4><p>${s.label}</p>`;
+        stats.appendChild(stat);
+      });
+      // Users table
+      const userBody = document.querySelector('#admin-users tbody');
+      userBody.innerHTML = '';
+      adminUsers.forEach(u => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${u.name} <span style="color:var(--muted);">(${u.handle})</span></td>
+          <td>${u.role}</td>
+          <td>${u.joined}</td>
+          <td>${u.status}</td>
+          <td class="admin-actions">
+            <button onclick="alert('Edit user (stub)')">Edit</button>
+            <button class="danger" onclick="alert('Ban user (stub)')">Ban</button>
+          </td>
+        `;
+        userBody.appendChild(tr);
+      });
+      // Flagged posts table
+      const postBody = document.querySelector('#admin-posts tbody');
+      postBody.innerHTML = '';
+      adminFlaggedPosts.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${p.author}</td>
+          <td>${p.content}</td>
+          <td>${p.reason}</td>
+          <td class="admin-actions"><button class="danger" onclick="alert('Remove post (stub)')">Remove</button></td>
+        `;
+        postBody.appendChild(tr);
+      });
+    }
+    // Render suggested users and trending list in the aside
+    function renderAside() {
+      // Trending
+      const tList = document.getElementById('trending-list');
+      trendingTopics.forEach(tag => {
+        const li = document.createElement('li');
+        li.textContent = tag;
+        tList.appendChild(li);
+      });
+      // Suggested users
+      const suggest = document.getElementById('suggested-users');
+      suggested.forEach(u => {
+        const div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.alignItems = 'center';
+        div.style.gap = '10px';
+        div.style.marginBottom = '8px';
+        div.innerHTML = `
+          <img src="${u.avatar}" alt="${u.name}" style="width:36px;height:36px;border-radius:12px;border:1px solid var(--border);object-fit:cover;"/>
+          <div>
+            <div style="font-weight:600;">${u.name}</div>
+            <div style="font-size:12px;color:var(--muted);">${u.handle}</div>
+          </div>
+        `;
+        suggest.appendChild(div);
+      });
+    }
+    // Initialize AI chat logs; ensures each log container is empty on first visit
+    function initializeAI() {
+      ['chatgpt-log','gemini-log','grok-log'].forEach(id => {
+        const container = document.getElementById(id);
+        if (container && container.children.length === 0) {
+          const msg = document.createElement('div');
+          msg.style.color = 'var(--muted)';
+          msg.textContent = 'Say something to begin the conversation.';
+          container.appendChild(msg);
+        }
+      });
+    }
+    // Simulate sending a message to an AI model.  This function appends
+    // the user’s message and a placeholder reply into the chat log.  In
+    // production you would call the appropriate API and stream the
+    // response back into the log.  The model parameter picks which log
+    // container to target.
+    function sendAIMessage(model) {
+      const input = document.getElementById(model + '-input');
+      const log = document.getElementById(model + '-log');
+      const text = input.value.trim();
+      if (!text) return;
+      // Append user message
+      const userMsg = document.createElement('div');
+      userMsg.innerHTML = `<strong>You:</strong> ${text}`;
+      log.appendChild(userMsg);
+      // Simulate AI reply after a short delay
+      setTimeout(() => {
+          const aiMsg = document.createElement('div');
+          aiMsg.innerHTML = `<strong>${model.toUpperCase()}:</strong> (This is a simulated response.  Integrate the ${model} API here.)`;
+          log.appendChild(aiMsg);
+          log.scrollTop = log.scrollHeight;
+      }, 500);
+      input.value = '';
+    }
+    // Create a new zone (division).  This demonstrates how an admin
+    // could extend the platform at runtime.  The new zone will appear
+    // in the sidebar and a section will be added in the main area.  Note:
+    // the zone will not have any default rendering logic – this is left
+    // to future development.
+    function createNewZone() {
+      const id = document.getElementById('new-zone-id').value.trim();
+      const label = document.getElementById('new-zone-label').value.trim();
+      const icon = document.getElementById('new-zone-icon').value.trim() || '⌁';
+      if (!id || !label) {
+        alert('Please specify both an ID and a label for the new division.');
+        return;
+      }
+      // Create nav item
+      const navItem = document.createElement('div');
+      navItem.className = 'nav-item';
+      navItem.dataset.zone = id;
+      navItem.innerHTML = `<span class="icon">${icon}</span> ${label}`;
+      navItem.addEventListener('click', () => activateZone(id));
+      // Append to system group
+      document.querySelector('nav .nav-group:last-child').appendChild(navItem);
+      // Create section
+      const section = document.createElement('section');
+      section.id = 'zone-' + id;
+      section.className = 'zone-section';
+      section.style.display = 'none';
+      section.innerHTML = `<h2>${label}</h2><p>This is a newly created division.  Implement rendering logic for <strong>${label}</strong>.</p>`;
+      document.getElementById('main').appendChild(section);
+      // Clear inputs
+      document.getElementById('new-zone-id').value = '';
+      document.getElementById('new-zone-label').value = '';
+      document.getElementById('new-zone-icon').value = '';
+      alert('New division added.  Click it from the sidebar to view.');
+    }
+    // Attach click handlers to nav items
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const id = item.dataset.zone;
+        activateZone(id);
+      });
+    });
+    // On initial load, populate aside lists and default zone
+    renderAside();
+    activateZone('home');
+
+    /* ------------------------------------------------------------------
+       Authentication, Profiles and Settings
+       ------------------------------------------------------------------ */
+    // Track the current user (null if unauthenticated).  In a real
+    // implementation this would be loaded from a JWT stored in
+    // cookies/localStorage and validated via an API call.
+    let currentUser = null;
+
+    // Update navigation links based on auth status
+    function updateNavForAuth() {
+      const isAuth = !!currentUser;
+      document.querySelectorAll('[data-auth="guest"]').forEach(el => {
+        el.style.display = isAuth ? 'none' : '';
+      });
+      document.querySelectorAll('[data-auth="user"]').forEach(el => {
+        el.style.display = isAuth ? '' : 'none';
+      });
+      if (isAuth) {
+        // Personalise profile nav label
+        const profileNav = document.getElementById('nav-profile');
+        profileNav.innerHTML = `<span class="icon">👤</span> ${currentUser.displayName || currentUser.name || 'Profile'}`;
+      }
+    }
+
+    // Open the auth modal.  Mode can be 'login' or 'signup'
+    function openAuthModal(mode) {
+      const modal = document.getElementById('auth-modal');
+      const loginBox = document.getElementById('auth-login-box');
+      const signupBox = document.getElementById('auth-signup-box');
+      modal.style.display = 'flex';
+      if (mode === 'signup') {
+        signupBox.style.display = 'block';
+        loginBox.style.display = 'none';
+      } else {
+        loginBox.style.display = 'block';
+        signupBox.style.display = 'none';
+      }
+    }
+    function closeAuthModal() {
+      const modal = document.getElementById('auth-modal');
+      modal.style.display = 'none';
+      document.getElementById('auth-login-box').style.display = 'none';
+      document.getElementById('auth-signup-box').style.display = 'none';
+    }
+
+    // Attach nav event handlers for auth
+    document.getElementById('nav-login').addEventListener('click', () => openAuthModal('login'));
+    document.getElementById('nav-signup').addEventListener('click', () => openAuthModal('signup'));
+    document.getElementById('nav-logout').addEventListener('click', () => {
+      // Clear current user and update UI
+      currentUser = null;
+      updateNavForAuth();
+      activateZone('home');
+    });
+
+    // Switch between login and signup from within modal
+    document.getElementById('switch-to-signup').addEventListener('click', e => {
+      e.preventDefault();
+      openAuthModal('signup');
+    });
+    document.getElementById('switch-to-login').addEventListener('click', e => {
+      e.preventDefault();
+      openAuthModal('login');
+    });
+
+    // Handle login form submission
+    document.getElementById('login-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || 'Login failed');
+          return;
+        }
+        currentUser = data.user;
+        closeAuthModal();
+        updateNavForAuth();
+        activateZone('home');
+      } catch (err) {
+        console.error(err);
+        alert('Network error while logging in.');
+      }
+    });
+    // Handle signup form submission
+    document.getElementById('signup-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const name = document.getElementById('signup-name').value.trim();
+      const username = document.getElementById('signup-username').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value.trim();
+      try {
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, username, email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || 'Sign up failed');
+          return;
+        }
+        currentUser = data.user;
+        closeAuthModal();
+        updateNavForAuth();
+        activateZone('profile');
+        renderProfilePage();
+      } catch (err) {
+        console.error(err);
+        alert('Network error while signing up.');
+      }
+    });
+
+    // Navigate to profile and settings
+    document.getElementById('nav-profile').addEventListener('click', () => {
+      activateZone('profile');
+      renderProfilePage();
+    });
+    document.getElementById('nav-settings').addEventListener('click', () => {
+      activateZone('settings');
+      renderThemeSelector();
+    });
+
+    // Render the profile page with user information
+    async function renderProfilePage() {
+      if (!currentUser) return;
+      // Populate static fields
+      document.getElementById('profile-displayname').value = currentUser.displayName || currentUser.name || '';
+      document.getElementById('profile-username').value = '@' + currentUser.username;
+      document.getElementById('profile-bio').value = currentUser.bio || '';
+      document.getElementById('profile-link').value = currentUser.link || '';
+      document.getElementById('profile-location').value = currentUser.location || '';
+      document.getElementById('profile-website').value = currentUser.website || '';
+      // Avatar/banner preview
+      document.getElementById('profile-avatar').src = currentUser.avatar || 'https://via.placeholder.com/80';
+      document.getElementById('profile-banner').src = currentUser.banner || 'https://via.placeholder.com/800x200';
+      // Stats
+      const stats = document.getElementById('profile-stats');
+      stats.innerHTML = '';
+      const views = document.createElement('div');
+      views.innerHTML = `<strong>${currentUser.views || 0}</strong> Views`;
+      const followers = document.createElement('div');
+      followers.innerHTML = `<strong>${currentUser.followers || 0}</strong> Followers`;
+      const following = document.createElement('div');
+      following.innerHTML = `<strong>${currentUser.following || 0}</strong> Following`;
+      stats.appendChild(views);
+      stats.appendChild(followers);
+      stats.appendChild(following);
+    }
+
+    // Handle profile form submission
+    document.getElementById('profile-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!currentUser) return;
+      const payload = {
+        displayName: document.getElementById('profile-displayname').value.trim(),
+        bio: document.getElementById('profile-bio').value.trim(),
+        link: document.getElementById('profile-link').value.trim(),
+        location: document.getElementById('profile-location').value.trim(),
+        website: document.getElementById('profile-website').value.trim(),
+      };
+      try {
+        const res = await fetch(`/api/users/${currentUser.username}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || 'Could not update profile');
+          return;
+        }
+        currentUser = data.user;
+        renderProfilePage();
+        alert('Profile saved');
+      } catch (err) {
+        console.error(err);
+        alert('Network error while saving profile.');
+      }
+    });
+
+    // Avatar/banner upload handlers (placeholder – integrate with S3-compatible storage)
+    document.getElementById('avatar-upload').addEventListener('change', async e => {
+      if (!currentUser) return;
+      const file = e.target.files[0];
+      if (!file) return;
+      // In production, upload the file to S3 and update the profile
+      // This stub just updates the preview locally
+      const reader = new FileReader();
+      reader.onload = () => {
+        document.getElementById('profile-avatar').src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+    document.getElementById('banner-upload').addEventListener('change', async e => {
+      if (!currentUser) return;
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        document.getElementById('profile-banner').src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Theme engine configuration
+    const themes = {
+      Dark: { '--bg': '#0a0f1c', '--panel': '#10182f', '--panel-alt': '#0e1220', '--card': '#0b1328', '--border': 'rgba(255,255,255,0.08)', '--text': '#eaf0ff', '--muted': 'rgba(234,240,255,0.7)', '--brand': '#7c5cff', '--brand-accent': '#31d4ff' },
+      Light: { '--bg': '#ffffff', '--panel': '#f5f5f9', '--panel-alt': '#f0f0f4', '--card': '#ffffff', '--border': 'rgba(0,0,0,0.1)', '--text': '#0a0f1c', '--muted': 'rgba(10,15,28,0.6)', '--brand': '#7c5cff', '--brand-accent': '#31d4ff' },
+      Cyberpunk: { '--bg': '#05010d', '--panel': '#170a33', '--panel-alt': '#110728', '--card': '#1a093b', '--border': 'rgba(255,0,255,0.15)', '--text': '#f6eaff', '--muted': 'rgba(246,234,255,0.7)', '--brand': '#ff00e6', '--brand-accent': '#00fff7' },
+      Neon: { '--bg': '#06061a', '--panel': '#0a0a33', '--panel-alt': '#070726', '--card': '#0d0d3d', '--border': 'rgba(0,255,255,0.15)', '--text': '#e0ffff', '--muted': 'rgba(224,255,255,0.7)', '--brand': '#00ffd5', '--brand-accent': '#ff00f3' },
+      Midnight: { '--bg': '#0c1227', '--panel': '#101a35', '--panel-alt': '#0f1731', '--card': '#0d1330', '--border': 'rgba(255,255,255,0.07)', '--text': '#dde5f5', '--muted': 'rgba(221,229,245,0.7)', '--brand': '#4b6aff', '--brand-accent': '#6a7cff' },
+      Solar: { '--bg': '#fff9e6', '--panel': '#fff4d9', '--panel-alt': '#fff1cc', '--card': '#fff7e6', '--border': 'rgba(0,0,0,0.1)', '--text': '#3d3a23', '--muted': 'rgba(61,58,35,0.6)', '--brand': '#f0b429', '--brand-accent': '#f59e0b' },
+      Matrix: { '--bg': '#010905', '--panel': '#022411', '--panel-alt': '#013d1b', '--card': '#024f1e', '--border': 'rgba(0,255,0,0.15)', '--text': '#a5f0a5', '--muted': 'rgba(165,240,165,0.7)', '--brand': '#00ff41', '--brand-accent': '#00ffa3' },
+      Vaporwave: { '--bg': '#fff0f6', '--panel': '#ffe3f0', '--panel-alt': '#ffd6e8', '--card': '#ffecf4', '--border': 'rgba(0,0,0,0.1)', '--text': '#3f184b', '--muted': 'rgba(63,24,75,0.6)', '--brand': '#ff77ff', '--brand-accent': '#77ddff' },
+      Minimal: { '--bg': '#f8f9fa', '--panel': '#ffffff', '--panel-alt': '#fafafa', '--card': '#ffffff', '--border': 'rgba(0,0,0,0.08)', '--text': '#222', '--muted': 'rgba(34,34,34,0.6)', '--brand': '#0d6efd', '--brand-accent': '#6610f2' },
+      Crimson: { '--bg': '#1a0a0a', '--panel': '#330e0e', '--panel-alt': '#290b0b', '--card': '#3d1111', '--border': 'rgba(255,0,0,0.15)', '--text': '#f4dada', '--muted': 'rgba(244,218,218,0.7)', '--brand': '#ff4d4d', '--brand-accent': '#ff7373' },
+      Emerald: { '--bg': '#06140d', '--panel': '#0d2a18', '--panel-alt': '#10381f', '--card': '#124a27', '--border': 'rgba(0,255,127,0.15)', '--text': '#c6f5d1', '--muted': 'rgba(198,245,209,0.7)', '--brand': '#00b37e', '--brand-accent': '#00d5a5' },
+      Obsidian: { '--bg': '#0d1117', '--panel': '#161b22', '--panel-alt': '#13161c', '--card': '#1c2128', '--border': 'rgba(255,255,255,0.05)', '--text': '#c9d1d9', '--muted': 'rgba(201,209,217,0.7)', '--brand': '#58a6ff', '--brand-accent': '#79c0ff' },
+    };
+
+    // Populate theme selector grid
+    function renderThemeSelector() {
+      const list = document.getElementById('theme-list');
+      list.innerHTML = '';
+      Object.keys(themes).forEach(name => {
+        const card = document.createElement('button');
+        card.textContent = name;
+        card.style.padding = '12px';
+        card.style.borderRadius = 'var(--radius)';
+        card.style.border = '1px solid var(--border)';
+        card.style.background = 'var(--panel-alt)';
+        card.style.color = 'var(--text)';
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', () => selectTheme(name));
+        list.appendChild(card);
+      });
+    }
+
+    // Apply selected theme by updating CSS variables on :root
+    function selectTheme(name) {
+      const theme = themes[name];
+      if (!theme) return;
+      Object.keys(theme).forEach(key => {
+        document.documentElement.style.setProperty(key, theme[key]);
+      });
+      // Persist theme locally and optionally to server
+      localStorage.setItem('nebria-theme', name);
+      if (currentUser) {
+        fetch(`/api/users/${currentUser.username}/theme`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ theme: name }),
+        }).catch(() => {});
+      }
+    }
+
+    // On initial load, apply stored theme
+    const storedTheme = localStorage.getItem('nebria-theme');
+    if (storedTheme && themes[storedTheme]) {
+      selectTheme(storedTheme);
+    }
+
+    // Initialise nav based on currentUser (guest by default)
+    updateNavForAuth();
+  </script>
+</body>
+</html>
