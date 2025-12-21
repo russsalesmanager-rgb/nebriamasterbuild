@@ -1,0 +1,7 @@
+{
+  "name": "nebria-gateway",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker gateway for Nebria",
+  "main": "index.js",
+  "private": true
+}
