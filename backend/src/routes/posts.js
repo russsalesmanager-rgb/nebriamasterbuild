@@ -265,9 +265,12 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       await models.AuditLog.create({
         actorUserId: req.user.id,
         action: 'DELETE_POST',
-        targetType: 'Post',
         targetId: post.id,
-        metadata: { reason: 'Admin/Moderator deletion' }
+        details: { 
+          reason: 'Admin/Moderator deletion',
+          postContent: post.content,
+          postAuthor: post.userId
+        }
       });
     }
     
