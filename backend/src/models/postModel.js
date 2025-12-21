@@ -29,6 +29,41 @@ class Post extends Model {
         parentId: {
           type: DataTypes.UUID,
           allowNull: true
+        },
+        zoneKey: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+          field: 'zone_key',
+          comment: 'Zone identifier: home, you, pin, pix, thread, x, vr, ai'
+        },
+        zoneType: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+          field: 'zone_type',
+          comment: 'Additional zone classification'
+        },
+        isIllegal: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+          field: 'is_illegal',
+          comment: 'Flagged as illegal content'
+        },
+        isBanned: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+          field: 'is_banned',
+          comment: 'Content is banned'
+        },
+        bannedBy: {
+          type: DataTypes.UUID,
+          allowNull: true,
+          field: 'banned_by',
+          comment: 'User ID who banned this content'
+        },
+        bannedAt: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          field: 'banned_at'
         }
       },
       {

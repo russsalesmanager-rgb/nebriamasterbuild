@@ -11,15 +11,35 @@ class AuditLog extends Model {
         },
         actorUserId: {
           type: DataTypes.UUID,
-          allowNull: true
+          allowNull: true,
+          field: 'actor_user_id'
+        },
+        userId: {
+          type: DataTypes.UUID,
+          allowNull: true,
+          field: 'user_id'
         },
         action: {
           type: DataTypes.STRING,
           allowNull: false
         },
+        entityType: {
+          type: DataTypes.STRING,
+          allowNull: true,
+          field: 'entity_type'
+        },
+        entityId: {
+          type: DataTypes.STRING,
+          allowNull: true,
+          field: 'entity_id'
+        },
         targetId: {
           type: DataTypes.STRING,
-          allowNull: true
+          allowNull: true,
+          field: 'target_id'
+        },
+        metadata: {
+          type: DataTypes.JSON
         },
         details: {
           type: DataTypes.JSON

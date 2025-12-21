@@ -41,6 +41,16 @@ class User extends Model {
         isVerified: {
           type: DataTypes.BOOLEAN,
           defaultValue: false
+        },
+        isBanned: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+          field: 'is_banned'
+        },
+        bannedAt: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          field: 'banned_at'
         }
       },
       {
