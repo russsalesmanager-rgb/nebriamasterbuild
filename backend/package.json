@@ -5,7 +5,10 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "worker": "node src/worker.js",
+    "seed": "node seed.js",
+    "migrate": "node -e \"require('./src/config/db').sync().then(() => { console.log('Database synced'); process.exit(0); })\""
   },
   "keywords": [],
   "author": "Nebria Platform",
