@@ -30,6 +30,19 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  
+  <!-- Nebria Configuration -->
+  <script>
+    window.NEBRIA_CONFIG = {
+      API_BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000/api'
+        : '/api',
+      WS_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000'
+        : window.location.origin
+    };
+  </script>
+  
   <style>
     :root {
       /* Global color palette.  These variables make it easy to tweak
@@ -384,6 +397,67 @@
       right: 12px;
       cursor: pointer;
       color: var(--muted);
+    }
+    
+    /* API Integration Styles */
+    .post-card {
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    .post-card .post-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .post-card .post-author strong {
+      color: var(--text);
+      margin-right: 8px;
+    }
+    .post-card .post-time {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .post-card .post-content {
+      color: var(--text);
+      line-height: 1.6;
+      margin-bottom: 12px;
+      word-wrap: break-word;
+    }
+    .post-card .post-content a {
+      color: var(--brand-accent);
+      text-decoration: none;
+    }
+    .post-card .post-content a:hover {
+      text-decoration: underline;
+    }
+    .post-card .post-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .post-card .post-actions button {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .post-card .post-actions button:hover {
+      background: var(--brand);
+      border-color: var(--brand);
+    }
+    .no-posts {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+      font-size: 16px;
     }
   </style>
 </head>
@@ -1336,5 +1410,10 @@
     // Initialise nav based on currentUser (guest by default)
     updateNavForAuth();
   </script>
+
+  <!-- Nebria API Integration -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
