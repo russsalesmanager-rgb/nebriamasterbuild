@@ -1,0 +1,38 @@
+name = "nebria-worker"
+compatibility_date = "2024-01-01"
+
+[build]
+command = "docker build -t nebria-worker:latest ../../backend"
+
+[[services]]
+name = "nebria-background-worker"
+entrypoint = ["node", "src/worker.js"]
+
+[services.build]
+dockerfile = "../../backend/Dockerfile"
+
+[[services.bindings]]
+type = "container"
+name = "postgres"
+environment = "production"
+
+[[services.bindings]]
+type = "container"
+name = "redis"
+environment = "production"
+
+# Environment variables for the worker container
+[env.production.vars]
+NODE_ENV = "production"
+
+# Secrets (set via: wrangler secret put <NAME>)
+# Required secrets:
+# - DB_NAME
+# - DB_USER
+# - DB_PASS
+# - DB_HOST
+# - DB_PORT
+# - REDIS_URL
+
+[env.staging.vars]
+NODE_ENV = "staging"

@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: nebria
+      POSTGRES_USER: nebria
+      POSTGRES_PASSWORD: nebria
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nebria"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: .
+    environment:
+      PORT: 3000
+      NODE_ENV: development
+      DB_NAME: nebria
+      DB_USER: nebria
+      DB_PASS: nebria
+      DB_HOST: postgres
+      DB_PORT: 5432
+      JWT_SECRET: supersecret
+      REFRESH_SECRET: refreshsupersecret
+      REDIS_URL: redis://redis:6379
+      CORS_ORIGIN: http://localhost:8080,http://localhost:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm start
+
+  # Background worker for BullMQ jobs
+  worker:
+    build: .
+    environment:
+      NODE_ENV: development
+      DB_NAME: nebria
+      DB_USER: nebria
+      DB_PASS: nebria
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: node src/worker.js
+
+volumes:
+  pgdata:
+  redisdata:
