@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 const models = require('../models');
+const { ZONE_KEYS } = require('../config/zones');
 
 const router = express.Router();
 
@@ -42,7 +43,7 @@ router.post(
   authMiddleware,
   [
     body('content').optional().isLength({ max: 5000 }),
-    body('zoneKey').optional().isIn(['home', 'you', 'pin', 'pix', 'thread', 'x', 'vr', 'ai'])
+    body('zoneKey').optional().isIn(ZONE_KEYS)
   ],
   async (req, res) => {
     const errors = validationResult(req);

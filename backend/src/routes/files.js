@@ -12,16 +12,16 @@ const router = express.Router();
 const upload = multer({ dest: 'tmp/uploads/' });
 
 // Upload a file
-router.post('/', authMiddleware, upload.single('file'), async (req, res) => {
+router.post('/upload', authMiddleware, upload.single('file'), async (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ error: 'No file provided' });
+    return res.status(400).json({ ok: false, error: { code: 'NO_FILE', message: 'No file provided' } });
   }
   const { originalname, mimetype, filename, size, path: filePath } = req.file;
   try {
     // Generate a unique remote key
     const ext = path.extname(originalname);
     const remoteKey = `${req.user.id}/${Date.now()}_${filename}${ext}`;
-    // Upload to S3 (placeholder)
+    // Upload to S3/R2
     const result = await uploadFile(filePath, remoteKey);
     // Create file record
     const file = await models.File.create({
@@ -34,10 +34,10 @@ router.post('/', authMiddleware, upload.single('file'), async (req, res) => {
     });
     // Remove tmp file
     fs.unlink(filePath, () => {});
-    return res.status(201).json(file);
+    return res.status(201).json({ ok: true, data: file });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: 'File upload failed' });
+    return res.status(500).json({ ok: false, error: { code: 'UPLOAD_FAILED', message: 'File upload failed', details: err.message } });
   }
 });
 

@@ -5,9 +5,13 @@ const models = require('../models');
 
 const router = express.Router();
 
-// In memory refresh token store (for demonstration). In production
-// you should persist refresh tokens in a database or cache with
-// revocation capabilities.
+// ⚠️ PRODUCTION WARNING: Refresh tokens stored in memory
+// This is for DEMONSTRATION ONLY. In production:
+// 1. Store refresh tokens in Redis or database
+// 2. Implement token revocation
+// 3. Support distributed/multi-instance deployments
+// 4. Add token rotation on refresh
+// Example: Use Token model or Redis with TTL
 const refreshTokens = new Map();
 
 // Register a new user
