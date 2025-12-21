@@ -1,0 +1,47 @@
+name = "nebria-backend"
+compatibility_date = "2024-01-01"
+
+[build]
+command = "docker build -t nebria-backend:latest ../../backend"
+
+[[services]]
+name = "nebria-backend-api"
+entrypoint = ["npm", "start"]
+
+[services.build]
+dockerfile = "../../backend/Dockerfile"
+
+[[services.bindings]]
+type = "container"
+name = "postgres"
+environment = "production"
+
+[[services.bindings]]
+type = "container"
+name = "redis"
+environment = "production"
+
+# Environment variables for the backend container
+[env.production.vars]
+NODE_ENV = "production"
+PORT = "3000"
+
+# Secrets (set via: wrangler secret put <NAME>)
+# Required secrets:
+# - DB_NAME
+# - DB_USER
+# - DB_PASS
+# - DB_HOST
+# - DB_PORT
+# - JWT_SECRET
+# - REFRESH_SECRET
+# - REDIS_URL
+# - R2_ACCESS_KEY_ID
+# - R2_SECRET_ACCESS_KEY
+# - R2_BUCKET
+# - R2_ENDPOINT
+# - R2_ACCOUNT_ID
+
+[env.staging.vars]
+NODE_ENV = "staging"
+PORT = "3000"

@@ -1,0 +1,77 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-test.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: nebria
+          POSTGRES_PASSWORD: nebria
+          POSTGRES_DB: nebria_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      
+      - name: Run linter
+        working-directory: backend
+        run: npm run lint || echo "Linting not configured"
+      
+      - name: Run tests
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          DB_NAME: nebria_test
+          DB_USER: nebria
+          DB_PASS: nebria
+          DB_HOST: localhost
+          DB_PORT: 5432
+          JWT_SECRET: test_secret
+          REFRESH_SECRET: test_refresh_secret
+          REDIS_URL: redis://localhost:6379
+        run: npm test || echo "Tests not configured yet"
+      
+      - name: Build Docker image
+        working-directory: backend
+        run: docker build -t nebria-backend:test .

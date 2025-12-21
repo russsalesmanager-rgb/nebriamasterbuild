@@ -1,0 +1,22 @@
+name = "nebria-api-gateway"
+main = "index.js"
+compatibility_date = "2024-01-01"
+workers_dev = true
+
+[env.production]
+name = "nebria-api-gateway-prod"
+routes = [
+  { pattern = "api.nebria.app/api/*", zone_name = "nebria.app" }
+]
+vars = { ENVIRONMENT = "production" }
+
+[env.staging]
+name = "nebria-api-gateway-staging"
+routes = [
+  { pattern = "staging-api.nebria.app/api/*", zone_name = "nebria.app" }
+]
+vars = { ENVIRONMENT = "staging" }
+
+# Environment variables (set these via wrangler secret put or dashboard)
+# BACKEND_URL - URL of the backend container service
+# CORS_ORIGIN - Allowed CORS origin(s)
