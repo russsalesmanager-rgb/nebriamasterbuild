@@ -10,10 +10,9 @@ RUN npm install
 
 # Copy application files
 COPY src ./src
-COPY schema.sql ./
 
 # Expose port
 EXPOSE 3000
 
-# Default command (can be overridden in docker-compose)
-CMD ["node", "src/server.js"]
+# Run worker
+CMD ["node", "src/workers/index.js"]
