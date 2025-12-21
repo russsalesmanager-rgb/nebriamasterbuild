@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: nebria-postgres
+    environment:
+      POSTGRES_DB: nebria
+      POSTGRES_USER: nebria
+      POSTGRES_PASSWORD: nebria
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nebria"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: nebria-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nebria-backend
+    environment:
+      PORT: 3000
+      DB_NAME: nebria
+      DB_USER: nebria
+      DB_PASS: nebria
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: supersecret
+      REFRESH_SECRET: refreshsupersecret
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/src:/app/src
+    command: ["node", "src/server.js"]
+
+  # Worker service for background jobs (future implementation)
+  # Currently uses the same backend image, but can be configured
+  # to run background tasks like video transcoding, email sending, etc.
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nebria-worker
+    environment:
+      PORT: 3001
+      DB_NAME: nebria
+      DB_USER: nebria
+      DB_PASS: nebria
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: supersecret
+      REFRESH_SECRET: refreshsupersecret
+      NODE_ENV: development
+      WORKER_MODE: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/src:/app/src
+    # For now, the worker will just run a placeholder command
+    # In the future, this would run a separate worker script
+    command: ["sh", "-c", "echo 'Worker service ready (placeholder)' && tail -f /dev/null"]
+
+volumes:
+  pgdata:
