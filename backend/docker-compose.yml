@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: nebria
+      POSTGRES_USER: nebria
+      POSTGRES_PASSWORD: nebria
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: .
+    environment:
+      PORT: 3000
+      DB_NAME: nebria
+      DB_USER: nebria
+      DB_PASS: nebria
+      DB_HOST: postgres
+      JWT_SECRET: supersecret
+      REFRESH_SECRET: refreshsupersecret
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:

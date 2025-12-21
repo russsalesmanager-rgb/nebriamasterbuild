@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: nebria-postgres
+    environment:
+      POSTGRES_DB: nebria
+      POSTGRES_USER: nebria
+      POSTGRES_PASSWORD: nebria
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nebria"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nebria-network
+
+  # Redis for caching and session storage
+  redis:
+    image: redis:7-alpine
+    container_name: nebria-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nebria-network
+
+  # Backend API server
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nebria-api
+    environment:
+      PORT: 3000
+      DB_NAME: nebria
+      DB_USER: nebria
+      DB_PASS: nebria
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: supersecret_change_in_production
+      REFRESH_SECRET: refreshsupersecret_change_in_production
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev
+    restart: unless-stopped
+    networks:
+      - nebria-network
+
+  # Background worker for async tasks
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nebria-worker
+    environment:
+      DB_NAME: nebria
+      DB_USER: nebria
+      DB_PASS: nebria
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      NODE_ENV: development
+      WORKER_MODE: "true"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: echo "Worker service placeholder - implement job queue as needed"
+    restart: unless-stopped
+    networks:
+      - nebria-network
+
+  # Frontend web server
+  frontend:
+    image: nginx:alpine
+    container_name: nebria-frontend
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - nebria-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  uploads:
+    driver: local
+
+networks:
+  nebria-network:
+    driver: bridge
