@@ -29,12 +29,31 @@ class Post extends Model {
         parentId: {
           type: DataTypes.UUID,
           allowNull: true
+        },
+        zoneKey: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+          comment: 'Zone identifier (e.g., you-zone, pix-zone, thread-zone)'
         }
       },
       {
         sequelize,
         tableName: 'posts',
-        modelName: 'Post'
+        modelName: 'Post',
+        indexes: [
+          {
+            fields: ['createdAt']
+          },
+          {
+            fields: ['userId']
+          },
+          {
+            fields: ['zoneKey']
+          },
+          {
+            fields: ['parentId']
+          }
+        ]
       }
     );
     return Post;
